@@ -1,4 +1,5 @@
 import os
+from pprint import pprint
 
 import pygame
 import requests
@@ -10,7 +11,7 @@ scale = 5
 map_api_server = "http://static-maps.yandex.ru/1.x/"
 clock = pygame.time.Clock()
 pygame.init()
-screen = pygame.display.set_mode((500, 650))
+screen = pygame.display.set_mode((500, 750))
 type_count = 0
 map_type = 'map'
 first_coord = coords
@@ -37,6 +38,8 @@ if __name__ == '__main__':
     reset_check = False
     running = True
     address = ''
+    index = ''
+    index_flag = True
     while running:
 
         for event in pygame.event.get():
@@ -60,6 +63,8 @@ if __name__ == '__main__':
                 elif event.key == pygame.K_TAB:
                     type_count += 1
                     map_type = map_types[type_count % 3]
+                elif event.key == pygame.K_LSHIFT:
+                    index_flag = False if index_flag else True
 
                 elif event.key == pygame.K_PAGEDOWN:
                     if scale - 1 >= 2:
@@ -81,12 +86,22 @@ if __name__ == '__main__':
         screen.blit(text_surface, (name_rect.x, name_rect.y))
         text_surface = pygame.font.Font(None, 18).render('Адрес:', True, (245, 245, 245))
         screen.blit(text_surface, (name_rect.x, 570))
-        text_surface = address_font.render(address, True, (245, 245, 245))
+        text_surface = address_font.render(address, True, (245, 0, 0))
         screen.blit(text_surface, ((name_rect.x, 590)))
         search_surface = base_font.render('Найти', True, (250, 250, 250))
         screen.blit(search_surface, (searchname_rect.x + 5, searchname_rect.y + 5))
         reset_surface = base_font.render('Сброс', True, (250, 250, 250))
         screen.blit(reset_surface, (reset_rect.x + 5, reset_rect.y + 5))
+
+        if index_flag:
+
+            text_surface = pygame.font.Font(None, 18).render('Индекс(вкл)', True, (245, 250, 250))
+            screen.blit(text_surface, (name_rect.x, 620))
+            text_surface = pygame.font.Font(None, 20).render(index, True, (245, 0, 0))
+            screen.blit(text_surface, (name_rect.x, 640))
+        else:
+            text_surface = pygame.font.Font(None, 18).render('Индекс(выкл)', True, (245, 250, 250))
+            screen.blit(text_surface, (name_rect.x, 620))
 
         if reset_rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0] == 1:
             reset_check = True
@@ -108,11 +123,20 @@ if __name__ == '__main__':
                 pass
 
             json_response = response.json()
+
             try:
                 reset_check = False
                 toponym = json_response["response"]["GeoObjectCollection"][
                     "featureMember"][0]["GeoObject"]
                 address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+                pprint(json_response)
+                try:
+                    index = \
+                        toponym["metaDataProperty"]["GeocoderMetaData"]['AddressDetails']['Country'][
+                            'AdministrativeArea'][
+                            'Locality']['Thoroughfare']['Premise']['PostalCode']['PostalCodeNumber']
+                except Exception:
+                    index = 'Индекс не найден!'
                 if len(address) > 56:
                     address_font = pygame.font.Font(None, 14)
                 if len(address) > 80:
@@ -121,6 +145,7 @@ if __name__ == '__main__':
                 lon, lat = toponym_coodrinates.split(" ")
                 coords = [lon, lat]
                 first_coord = coords
+
             except IndexError:
                 print('Неожиданная ошибка')
 
