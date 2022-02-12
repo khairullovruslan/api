@@ -13,6 +13,7 @@ pygame.init()
 screen = pygame.display.set_mode((500, 600))
 type_count = 0
 map_type = 'map'
+first_coord = coords
 
 
 def text_writter(x, y, text):
@@ -98,6 +99,7 @@ if __name__ == '__main__':
                 toponym_coodrinates = toponym["Point"]["pos"]
                 lon, lat = toponym_coodrinates.split(" ")
                 coords = [lon, lat]
+                first_coord = coords
             except IndexError:
                 print('Неожиданная ошибка')
 
@@ -108,7 +110,7 @@ if __name__ == '__main__':
             "z": zoom,
             "ll": ",".join(coords),
             "l": map_type,
-            "pt": ','.join([coords[0], coords[1], 'pmwtm'])
+            "pt": ','.join([first_coord[0], first_coord[1], 'pmwtm'])
         }
         response = requests.get(map_api_server, params=map_api_params)
         if not response:
