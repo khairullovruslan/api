@@ -10,7 +10,7 @@ scale = 5
 map_api_server = "http://static-maps.yandex.ru/1.x/"
 clock = pygame.time.Clock()
 pygame.init()
-screen = pygame.display.set_mode((500, 600))
+screen = pygame.display.set_mode((500, 650))
 type_count = 0
 map_type = 'map'
 first_coord = coords
@@ -30,11 +30,13 @@ if __name__ == '__main__':
     active = False
     flag = False
     base_font = pygame.font.Font(None, 28)
+    address_font = pygame.font.Font(None, 20)
     search_text = ''
     lon = coords[0]
     lat = coords[1]
     reset_check = False
     running = True
+    address = ''
     while running:
 
         for event in pygame.event.get():
@@ -77,12 +79,18 @@ if __name__ == '__main__':
 
         text_surface = base_font.render(search_text, True, (250, 250, 250))
         screen.blit(text_surface, (name_rect.x, name_rect.y))
+        text_surface = pygame.font.Font(None, 18).render('Адрес:', True, (245, 245, 245))
+        screen.blit(text_surface, (name_rect.x, 570))
+        text_surface = address_font.render(address, True, (245, 245, 245))
+        screen.blit(text_surface, ((name_rect.x, 590)))
         search_surface = base_font.render('Найти', True, (250, 250, 250))
         screen.blit(search_surface, (searchname_rect.x + 5, searchname_rect.y + 5))
         reset_surface = base_font.render('Сброс', True, (250, 250, 250))
         screen.blit(reset_surface, (reset_rect.x + 5, reset_rect.y + 5))
+
         if reset_rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0] == 1:
             reset_check = True
+            address = ''
 
         if search_text and searchname_rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0] == 1:
             toponym_to_find = search_text
@@ -104,6 +112,11 @@ if __name__ == '__main__':
                 reset_check = False
                 toponym = json_response["response"]["GeoObjectCollection"][
                     "featureMember"][0]["GeoObject"]
+                address = toponym["metaDataProperty"]["GeocoderMetaData"]["text"]
+                if len(address) > 56:
+                    address_font = pygame.font.Font(None, 14)
+                if len(address) > 80:
+                    address_font = pygame.font.Font(None, 12)
                 toponym_coodrinates = toponym["Point"]["pos"]
                 lon, lat = toponym_coodrinates.split(" ")
                 coords = [lon, lat]
@@ -124,8 +137,6 @@ if __name__ == '__main__':
             "pt": pwtm
         }
         response = requests.get(map_api_server, params=map_api_params)
-        if not response:
-            pass
 
         map_file = "map.png"
         with open(map_file, "wb") as file:
