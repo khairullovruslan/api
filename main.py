@@ -24,7 +24,8 @@ def text_writter(x, y, text):
 
 if __name__ == '__main__':
     screen.fill((27, 27, 27), rect=(0, 450, 500, 650))
-    searchname_rect = pygame.Rect(195, 530, 100, 30)
+    searchname_rect = pygame.Rect(295, 530, 100, 30)
+    reset_rect = pygame.Rect(105, 530, 100, 30)
     name_rect = pygame.Rect(20, 480, 460, 35)
     active = False
     flag = False
@@ -32,6 +33,7 @@ if __name__ == '__main__':
     search_text = ''
     lon = coords[0]
     lat = coords[1]
+    reset_check = False
     running = True
     while running:
 
@@ -70,12 +72,17 @@ if __name__ == '__main__':
                     lon = str(float(lon) + speed)
         screen.fill((27, 27, 27), rect=(0, 450, 500, 650))
         pygame.draw.rect(screen, (96, 96, 96), searchname_rect)
+        pygame.draw.rect(screen, (96, 96, 96), reset_rect)
         pygame.draw.rect(screen, (96, 96, 96), name_rect)
 
         text_surface = base_font.render(search_text, True, (250, 250, 250))
         screen.blit(text_surface, (name_rect.x, name_rect.y))
         search_surface = base_font.render('Найти', True, (250, 250, 250))
         screen.blit(search_surface, (searchname_rect.x + 5, searchname_rect.y + 5))
+        reset_surface = base_font.render('Сброс', True, (250, 250, 250))
+        screen.blit(reset_surface, (reset_rect.x + 5, reset_rect.y + 5))
+        if reset_rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0] == 1:
+            reset_check = True
 
         if search_text and searchname_rect.collidepoint(pygame.mouse.get_pos()) and pygame.mouse.get_pressed()[0] == 1:
             toponym_to_find = search_text
@@ -94,6 +101,7 @@ if __name__ == '__main__':
 
             json_response = response.json()
             try:
+                reset_check = False
                 toponym = json_response["response"]["GeoObjectCollection"][
                     "featureMember"][0]["GeoObject"]
                 toponym_coodrinates = toponym["Point"]["pos"]
@@ -105,12 +113,15 @@ if __name__ == '__main__':
 
         coords = [lon, lat]
         zoom = str(scale)
+        pwtm = None
+        if not reset_check:
+            pwtm = ','.join([first_coord[0], first_coord[1], 'pmwtm'])
 
         map_api_params = {
             "z": zoom,
             "ll": ",".join(coords),
             "l": map_type,
-            "pt": ','.join([first_coord[0], first_coord[1], 'pmwtm'])
+            "pt": pwtm
         }
         response = requests.get(map_api_server, params=map_api_params)
         if not response:
